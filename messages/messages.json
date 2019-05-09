@@ -1,0 +1,71 @@
+{
+  "help": [{
+    "title": "Help",
+    "initiator": "help",
+    "alias": [{
+      "command": "help"
+    }, {
+      "command": "h"
+    }, {
+      "command": "?"
+    }],
+    "description": "Displays this help message",
+    "extensions": []
+
+  }, {
+    "title": "Karma",
+    "initiator": "karma",
+    "alias": [{
+      "command": "k"
+    }],
+    "description": "This command is for viewing your karma",
+    "extensions": [{
+      "title": "Trading",
+      "initiator": "trade",
+      "alias": [{
+          "command": "t"
+        },
+        {
+          "command": "trading"
+        }
+      ],
+      "description": "This command gives some of the caster's karma to the target mentioned user. The correct use is ``!t karma trade @mention amount``"
+    }, {
+      "title": "Check",
+      "initiator": "check",
+      "alias": [{
+          "command": "c"
+        },
+        {
+          "command": "checking"
+        }
+      ],
+      "description": "This command shows the karma of mentioned user. The correct use is ``!t karma check @mention``"
+    }, {
+      "title": "Leaderboad",
+      "initiator": "leaderboard",
+      "alias": [{
+          "command": "ld"
+        },
+        {
+          "command": "board"
+        },
+        {
+          "command": "god"
+        }
+      ],
+      "description": "Display a leaderboard of with the top five users. The correct use is ``!t karma leaderboard``"
+    }]
+  }, {
+    "title": "Data",
+    "initiator": "data",
+    "alias": [],
+    "description": "Checks some statistics of the bot",
+    "extensions": [{
+      "title": "Uptime",
+      "initiator": "uptime",
+      "alias": [],
+      "description": "Show the uptime of the bot in days"
+    }]
+  }]
+}

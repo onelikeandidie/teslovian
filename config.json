@@ -1,5 +1,45 @@
 {
-  "token": "INPUT YOUR TOKEN HERE",
-  "prefix": ">",
-  "team_xp_multiplier": 1
+  "prefix": "T!",
+  "team_xp_multiplier": 1,
+  "object_kinds": {
+    "push": {
+      "kind": "push",
+      "channel": "484656210751258645"
+    },
+    "merge_request": {
+      "kind": "merge_request",
+      "channel": "484656210751258645"
+    },
+    "message": {
+      "kind": "message",
+      "channel": "484656210751258645"
+    }
+  },
+  "_comment": "The most Important events should be on top as the order can change the response",
+  "events": [{
+    "id": "myceliumbirthday",
+    "name": "Mycelium Birthday",
+    "date": "Apr 29",
+    "special_function": "mybirth"
+  }, {
+    "id": "haloween",
+    "name": "SPOOK DAY",
+    "date": "Oct 31",
+    "special_function": "spookday"
+  }, {
+    "id": "october",
+    "name": "Spookyween",
+    "date": "Oct",
+    "special_function": "spookyween"
+  }, {
+    "id": "tawerbirthday",
+    "name": "Tawer's Birthday",
+    "date": "Mar 27",
+    "special_function": "tawerbirth"
+  }, {
+    "id": "test",
+    "name": "Every Day is Eventful",
+    "date": "2019",
+    "special_function": "anyday"
+  }]
 }

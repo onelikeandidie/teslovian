@@ -1,264 +1,327 @@
-/*jshint esversion: 6 */
-
+// Discord.js
 const Discord = require('discord.js');
 const client = new Discord.Client();
+// http server for Post requests and others
+const http = require("http");
+// fs to write logs
+const fs = require('fs');
+// node-schedule for executing functions on specific dates and times
+const schedule = require('node-schedule');
+// startDate is for calculating uptime of the bot
+const startDate = new Date();
+// just how many milliseconds per day are
+const msPerDay = 24 * 60 * 60 * 1000;
+/* config file for multiple bot tokens and different channels for webhooks, also
+  for events that change how the bot works
+*/
 const config = require("./config.json");
-const teamsDatabase = require("./teams.json");
-const sql = require("sqlite");
-sql.open("./userdata.sqlite");
+/* messages config file allows different answers from the default ones, this
+  file is needed for the bot to start
+*/
+const messagesConfig = require("./messages/messages.json");
+// specialEvents execute functions on a certain date like spookyween
+const specialEvent = require("./events.js");
+/* userPoints simplifies the point system API so it's easier to access and adds
+  getting, setting and adding points to user ids
+*/
+const userPoints = require('./pointsystem.js');
+/* "new userPoints" uses the directory to open a sqlite file for storing points
+  in a database so other classes can access them and other programs
+*/
+const userPointsDatabase = new userPoints('./data/userdata.sqlite');
 
-/**
- * Check Team
- *
- * @function
- *
- * Checks the team for among the teams (message, teams)
- *
- * Returns (teamId, teamName, teamMultiplier)
- *
- */
-function checkTeam(messageSent, teams) {
-  var teamId = null;
-  var teamName;
-  var teamMultiplier;
-  for (var i = 0; i < teams.length; i++) {
-    if (messageSent.member.roles.has(teams[i].id)) {
-      teamId = teams[i].id;
-      teamName = teams[i].name;
-      teamMultiplier = config.team_xp_multiplier * teams[i].teamXP_buff;
-    }
+function isValidJSON(text) {
+  let completed = null;
+  try {
+    completed = JSON.parse(text);
+    return {
+      "data": completed,
+      "shouldContinue": true
+    };
+  } catch (e) {
+    return {
+      "data": completed,
+      "shouldContinue": false
+    };
   }
-  return {
-    "teamId": teamId,
-    "teamName": teamName,
-    "teamMultiplier": teamMultiplier
-  };
 }
 
+var todays_events = [];
+
+function checkEventsForToday() {
+  todays_events = [];
+  let now = new Date();
+  for (let i = 0; i < config.events.length; i++) {
+    if (now.toString().includes(config.events[i].date)) {
+      todays_events.push(config.events[i]);
+    }
+  }
+  if (todays_events != []) {
+    for (let i = 0; i < todays_events.length; i++) {
+      let this_event = new specialEvent(todays_events[i]);
+      specialEvent.executeSpecialFunctions(this_event, client);
+    }
+    console.log("There is(are) " + todays_events.length + " ongoing event(s) today");
+  }
+}
+
+/* The variable j contains a simple function using node-schedule to check
+  for events every midnight so the bot never misses a thing.
+*/
+var checkEventSchedule = schedule.scheduleJob('0 0 * * *', function() {
+  checkEventsForToday();
+});
+
 client.on('ready', () => {
+  console.log(`    Time started: ${startDate}`);
   console.log(`Logged in as ${client.user.tag}!`);
 
-  client.user.setActivity(`with Teslov's Patreon`);
-
+  client.user.setActivity(`with Teslov's Conscience`);
+  // Should allways check for ongoing events when the bot starts
+  checkEventsForToday();
 });
 
 client.on('message', msg => {
-
+  // Always ignore other bots and DMs from triggering the bot
   if (msg.channel.type === "dm") return;
-
-  var sender = msg.author;
-
-  var sender_teamid, sender_teamname, team_specific_multiplier;
-  var teamCheckResult = checkTeam(msg, teamsDatabase);
-  sender_teamid = teamCheckResult.teamId;
-  sender_teamname = teamCheckResult.teamName;
-  team_specific_multiplier = teamCheckResult.teamMultiplier;
-
-  if (msg.content.length >= 9) {
-    if (sender_teamid === null) {
-      // console.log("user with no team");
-    } else {
-      // SQLite shit
-      sql.get(`SELECT * FROM teamdata WHERE teamId = "${sender_teamid}"`).then(row => {
-        if (!row) { // Can't find the row.
-          sql.run("INSERT INTO teamdata (teamId, points) VALUES (?, ?)", [sender_teamid, 1]);
-        } else { // Can find the row.
-          sql.run(`UPDATE teamdata SET points = ${row.points + team_specific_multiplier} WHERE teamId = ${sender_teamid}`);
-        }
-      }).catch(() => {
-        console.error(e); // Gotta log those errors
-        sql.run("CREATE TABLE IF NOT EXISTS teamdata (teamId TEXT, points INTEGER)").then(() => {
-          sql.run("INSERT INTO teamdata (teamId, points) VALUES (?, ?)", [sender_teamid, 1]);
-        });
-      });
-
-      sql.get(`SELECT * FROM userdata WHERE userId = "${sender.id}"`).then(row => {
-        if (!row) { // Can't find the row.
-          sql.run("INSERT INTO userdata (userId, points) VALUES (?, ?)", [sender.id, 1]);
-        } else { // Can find the row.
-          sql.run(`UPDATE userdata SET points = ${row.points + team_specific_multiplier} WHERE userId = ${sender.id}`);
-        }
-      }).catch(() => {
-        console.error(e);
-        sql.run("CREATE TABLE IF NOT EXISTS userdata (userId TEXT, points INTEGER)").then(() => {
-          sql.run("INSERT INTO userdata (userId, points) VALUES (?, ?)", [sender.id, 1]);
-        });
-      });
-    }
-  }
-  //This boi makes it so it Ignores every other bot and peasents without prefix.
   if (msg.author.bot) return;
-  if (msg.content.indexOf(config.prefix) !== 0) return;
-  //Commands start here
-  if (sender_teamid === null) {
-    msg.reply(`You don't have a team assigned to you, use ?team "Team name here" on the <#440762235313455104> chat.`);
-  } else {
-    if (msg.content === config.prefix + "rank") {
-      var userpoints;
-      sql.get(`SELECT * FROM teamdata WHERE teamId = "${sender_teamid}"`).then(row => {
-        userpoints = row.points;
-      });
-      var teamrank = 4;
+  /* Also important to make the a variable with the msg in uppercase as so to
+    check for commands at the start of the message
+  */
+  let Message = msg.content.toUpperCase();
+  let sender = msg.author;
 
-      function callback01() {
-        msg.channel.send(`${sender_teamname} is rank ${teamrank}`);
-      }
+  let multiplier = Math.round(Message.length / 10);
+  if (Message.length >= 8 && Message.length < 16) {
+    userPoints.addPointsToUserMultiplied(sender.id, 1, multiplier);
+  } else if (Message.length >= 16 && Message.length < 32) {
+    userPoints.addPointsToUserMultiplied(sender.id, 1, multiplier);
+  } else if (Message.length >= 32) {
+    userPoints.addPointsToUserMultiplied(sender.id, 1, multiplier);
+  }
 
-      var i = 1;
-      teamsDatabase.forEach(function(ele) {
-        var otherteam;
-        if (ele.id === sender_teamid) return;
-        sql.get(`SELECT * FROM teamdata WHERE teamId = "${ele.id}"`).then(row => {
-          otherteam = row.points;
-        }).catch(() => {
-          console.error(e);
-          teamrank--;
-          return;
-        }).then(() => {
-          if (userpoints >= otherteam) {
-            teamrank--;
-            // console.log("teamrank " + teamrank);
-          } else {
-            // console.log("teamrank " + teamrank);
-          }
-          i++;
-          if (i == Object.keys(teamsDatabase).length) {
-            callback01();
-          }
-        });
-      });
+  if (Message.includes("TEAM") && msg.isMentioned(client.user.id)) {
+    let finalAnswer = "";
+    let lll = 0;
+    let teammessage = Message;
+    while (teammessage.includes("TEAM")) {
+      teammessage = teammessage.replace("TEAM", "");
+      lll++;
     }
-
-    if (msg.content === config.prefix + "points") {
-
-      var yourpoints = 1;
-
-      sql.get(`SELECT * FROM userdata WHERE userId ="${sender.id}"`).then(row => {
-        if (!row) return msg.reply("sadly you haven't contributed to your team!");
-        yourpoints = row.points;
-      });
-
-      sql.get(`SELECT * FROM teamdata WHERE teamId ="${sender_teamid}"`).then(row => {
-        if (!row) return msg.reply("sadly your team does not have any points yet!");
-        msg.reply(`${sender_teamname} has ${row.points} points, you have contribuited ${yourpoints} points`);
-      });
+    for (var i = 0; i < lll; i++) {
+      finalAnswer += "https://i.imgur.com/ufWSW8y.png";
     }
+    finalAnswer += " this is team";
+    msg.reply(finalAnswer);
+  }
 
-    if (msg.content === config.prefix + "leaderboard") {
+  if (Message.startsWith(config.prefix + "HEY")) {
+    // this variable is the final response of this command
+    let finalAnswer = null;
+    /* If the Sender is Teslov the bot should say it believes him instead of a
+      classic phrase
+    */
+    if (sender.id == 180407296705167360) {
+      msg.channel.send('I will always believe you Teslov');
+    } else {
+      /* Special Events change the classic response of the bot with a switch
 
-      var ranked = [];
-
-      var team01 = {};
-      var team02 = {};
-
-      function callback02() {
-        msg.channel.sendCode("css", ` = Leaderboard = \n 1. ${ranked[0].name} is leading with ${ranked[0].points} \n 2. ${ranked[1].name} with ${ranked[1].points} \n 3. ${ranked[2].name} with ${ranked[2].points} \n 4. ${ranked[3].name} with ${ranked[3].points}`);
+      This uses the todays_events variable and the id of the event in config
+      {
+        "id":"Event Id",
+        "name": "Event Name",
+        "date": "Event Date",
+        "special_function": "Event Designated function"
       }
+      */
+      switch (todays_events[0].id) {
+        case "halloween":
+          finalAnswer = "BOOOOOOOOOOOOO!!! Did I spook you human?";
+          break;
+        case "october":
+          finalAnswer = "Get ready for a spooky month human!";
+          break;
+        case "myceliumbirthday":
+          finalAnswer = "Happy Birthday Mycelium! 🎉 🎂 🎉";
+          break;
+        case "test":
+          finalAnswer = "Meh";
+          break;
+        default:
+          finalAnswer = "Hey, I'm a believer of teslov!";
+      }
+      // Send the final message to the chat after all the processing is done
+      msg.channel.send(finalAnswer);
+    }
+  }
 
-      var j = 0;
-      teamsDatabase.forEach(function(ele) {
-        if (j < 1) {
-          j++;
-          sql.get(`SELECT * FROM teamdata WHERE teamId = "${ele.id}"`).then(row => {
-            team01 = {
-              "teamid": ele.id,
-              "name": ele.name,
-              "points": row.points
-            };
-          }).catch(() => {
-            console.error(e);
-            return;
-          }).then(() => {
-            ranked = [team01];
-          });
-        } else {
-          sql.get(`SELECT * FROM teamdata WHERE teamId = "${ele.id}"`).then(row => {
-            team02 = {
-              "teamid": ele.id,
-              "name": ele.name,
-              "points": row.points
-            };
-          }).catch(() => {
-            console.errore();
-            return;
-          }).then(() => {
-            if (ranked[0].points <= team02.points) {
-              ranked.unshift(team02);
-            } else if (ranked[ranked.length - 1].points >= team02.points) {
-              ranked.push(team02);
-            } else if (ranked[ranked.length - 1].points <= team02.points) {
-              if (ranked[1].points <= team02.points) {
-                ranked.splice(1, 0, team02);
-              } else if (ranked[1].points >= team02.points) {
-                ranked.splice(ranked.length - 1, 0, team02);
+  if (Message.startsWith(config.prefix)) {
+    let args = Message.slice(3).split(' ');
+    console.log({
+      arguments: args,
+      size: args.length
+    });
+    if (args.length >= 1) {
+      if (args[0] == "KARMA" || args[0] == "K") {
+        let finalMessage = "";
+        if (args.length >= 2) {
+          switch (args[1]) {
+            case "TRADE":
+            case "TRADING":
+            case "T":
+              console.log("trade service");
+              if (args.length == 4) {
+                console.log("exchange started");
+                let callback01 = function(result) {
+                  if (result.code == 0) {
+                    msg.reply("Trade Successful");
+                  } else {
+                    switch (result.code) {
+                      case 100:
+                        msg.reply("you don't have enough points to trade with <@" + msg.mentions.users.first().id + ">");
+                        break;
+                      case 102:
+                        msg.reply("you can't trade negative currency, don't try and steal points like that human");
+                        break;
+                      default:
+                        msg.reply("Trade unsuccessful");
+                    }
+                  }
+                };
+                if (msg.mentions.users.first().bot) {
+                  msg.channel.send("Unfortunately, bots don't have karma. They only have good bot points");
+                  return;
+                }
+                if (msg.mentions.users.first().id == sender.id) {
+                  msg.channel.send("Trading with yourself is impossible, but you can pat yourself on the back");
+                  return;
+                }
+                try {
+                  userPoints.tradeUserPoints(sender.id, msg.mentions.users.first().id, args[3], callback01);
+                } catch (e) {
+                  msg.reply("I wasn't able to find the user mentioned, be sure to use the correct arguments ``!t karma trade @mention amount``");
+                }
               }
-            } else {
-              team02 = {
-                "teamid": "errorId",
-                "name": "errorName",
-                "points": "errorPoints"
+              break;
+            case "CHECK":
+            case "CHECKING":
+            case "C":
+              console.log("checking service");
+              let callback01 = function(points) {
+                msg.reply("" + msg.mentions.users.first().username + " has " + points + " karma");
               };
-              ranked.push(team02);
-            }
-            if (ranked.length == Object.keys(teamsDatabase).length) {
-              callback02();
-            }
-          });
+              if (args.length == 3) {
+                if (msg.mentions.users.first().bot) {
+                  msg.channel.send("Unfortunately, bots don't have karma. They only have good bot points");
+                  return;
+                }
+                if (msg.mentions.users.first().id == sender.id) {
+                  msg.channel.send("Trading with yourself is impossible, but you can pat yourself on the back");
+                  return;
+                }
+                try {
+                  userPoints.getUserPoints(msg.mentions.users.first().id, callback01);
+                } catch (e) {
+                  msg.reply("I wasn't able to find the user mentioned, be sure to use the correct arguments ``!t karma check @mention``");
+                }
+              }
+              break;
+            case "LEADERBOARD":
+            case "LB":
+            case "GOD":
+            case "BOARD":
+              let messageFinal;
+              userPoints.getBestUser(function(result) {
+                let members = "";
+                for (let member of result.parsed) {
+                  let tag = client.users.get(member.userId).tag;
+                  members += "\n**" + tag + "** with **" + member.points + "** karma";
+                }
+                messageFinal = "\n___**LEADERBOARD**___" + members + "";
+                msg.channel.send(messageFinal);
+              });
+              break;
+          }
         }
-      });
+
+        if (args.length == 1) {
+          let callback01 = function(points) {
+            msg.reply("you have " + points + " useable karma");
+          };
+          userPoints.getUserPoints(sender.id, callback01);
+        }
+      }
+    }
+
+    if (Message.startsWith(config.prefix + "DATA")) {
+      switch (Message) {
+        case config.prefix + "DATA" + " " + "UPTIME":
+          let timePassed = (new Date()) - startDate;
+          timePassed = Math.ceil(timePassed / msPerDay * 100) / 100;
+          msg.reply(timePassed + " days of uptime!");
+          break;
+        case config.prefix + "DATA" + " " + "VERSION":
+          break;
+        default:
+          msg.reply("Use !T help to know what commands you can use");
+      }
+    }
+
+    if (Message.startsWith(config.prefix + "HELP") || Message.startsWith(config.prefix + "H") || Message.startsWith(config.prefix + "?")) {
+      let embedMessage;
+      let callback01 = function(m) {
+        console.log(m);
+        sender.send(m);
+        msg.reply("check your dms");
+      };
+      embedMessage = {
+        author: {
+          name: client.username,
+          icon_url: client.displayAvatarURL
+        },
+        title: "HELP LIST",
+        fields: [],
+        timestamp: new Date()
+      };
+      for (let command of messagesConfig.help) {
+        let alias = "";
+        if (command.alias.length > 0) {
+          alias = "\nAliases:";
+          for (let a of command.alias) {
+            alias = alias + " \"" + a.command + "\"";
+          }
+        }
+        let uses = "";
+        if (command.extensions.length > 0) {
+          uses = "\nUses:";
+          for (let a of command.extensions) {
+            uses = uses + "\n**-" + a.title + "-**\n" + a.description + "\n" + "Initiator command: \"" + a.initiator + "\"";
+            if (a.alias.length > 0) {
+              uses = uses + "\nAliases:";
+              for (let b of a.alias) {
+                uses = uses + " \"" + b.command + "\"";
+              }
+            }
+          }
+        }
+        embedMessage.fields.push({
+          name: "**___ " + command.title + " ___**",
+          value: command.description + "\n" + "Initiator command: \"" + command.initiator + "\"" + alias + uses
+        });
+      }
+      let helpMessage = {
+        embed: embedMessage
+      };
+      callback01(helpMessage);
     }
   }
-
-  if (msg.content === config.prefix + 'hey') {
-    msg.channel.send('Hey I am a believer of Teslov');
-  }
 });
-
-client.on('guildMemberUpdate', (oldUser, newUser) => {});
-
-client.on('messageDelete', deletmsg => {
-  var sender = deletmsg.author;
-  var sender_teamid, sender_teamname, team_specific_multiplier;
-  var teamCheckResult = checkTeam(deletmsg, teamsDatabase);
-  sender_teamid = teamCheckResult.teamId;
-  sender_teamname = teamCheckResult.teamName;
-  team_specific_multiplier = teamCheckResult.teamMultiplier;
-
-  if (sender_teamid === null) {
-    // console.log("user with no team");
-  } else {
-    // SQLite shit
-    sql.get(`SELECT * FROM teamdata WHERE teamId = "${sender_teamid}"`).then(row => {
-      if (!row) { // Can't find the row.
-        sql.run("INSERT INTO teamdata (teamId, points) VALUES (?, ?)", [sender_teamid, 1]);
-      } else { // Can find the row.
-        sql.run(`UPDATE teamdata SET points = ${row.points - team_specific_multiplier} WHERE teamId = ${sender_teamid}`);
-      }
-    }).catch(() => {
-      console.error; // Gotta log those errors
-      sql.run("CREATE TABLE IF NOT EXISTS teamdata (teamId TEXT, points INTEGER)").then(() => {
-        sql.run("INSERT INTO teamdata (teamId, points) VALUES (?, ?)", [sender_teamid, 1]);
-      });
-    });
-
-    sql.get(`SELECT * FROM userdata WHERE userId = "${sender.id}"`).then(row => {
-      if (!row) { // Can't find the row.
-        sql.run("INSERT INTO userdata (userId, points) VALUES (?, ?)", [sender.id, 1]);
-      } else { // Can find the row.
-        sql.run(`UPDATE userdata SET points = ${row.points - team_specific_multiplier} WHERE userId = ${sender.id}`);
-      }
-    }).catch(() => {
-      console.error;
-      sql.run("CREATE TABLE IF NOT EXISTS userdata (userId TEXT, points INTEGER)").then(() => {
-        sql.run("INSERT INTO userdata (userId, points) VALUES (?, ?)", [sender.id, 1]);
-      });
-    });
-  }
-});
-
 
 client.on('error', e => {
-  console.error(e);
+  fs.writeFile("./logs/error.log", JSON.stringify(e), function(err) {
+    if (err) throw err;
+    console.log("Error was logged in ./logs");
+  });
 });
 
-client.login(config.token);
+client.login(process.env.BOT_TOKEN);
