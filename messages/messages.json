@@ -67,5 +67,41 @@
       "alias": [],
       "description": "Show the uptime of the bot in days"
     }]
+  }, {
+    "title": "Random",
+    "initiator": "random",
+    "alias": [{
+      "command": "ran"
+    }, {
+      "command": "r"
+    }],
+    "description": "Use ``@Teslovian /random {Your Text}`` to generate ``{Your Text}`` on an Image",
+    "extensions": []
+  }, {
+    "title": "Shirt",
+    "initiator": "shirt",
+    "alias": [],
+    "description": "Use ``@Teslovian /shirt {Your Text}`` to generate an T-Shirt with ``{Your Text}`` on it",
+    "extensions": []
+  }, {
+    "title": "Place",
+    "initiator": "place",
+    "alias": [],
+    "description": "Use ``@Teslovian /place {Your Text}`` to replace the location in a random image ``{Your Text}``",
+    "extensions": []
+  }, {
+    "title": "I'm",
+    "initiator": "im",
+    "alias": [{
+      "command": "i'm"
+    }],
+    "description": "Use ``@Teslovian /by {Your Text}`` to replace text with an aspect of you from ``{Your Text}``",
+    "extensions": []
+  }, {
+    "title": "By",
+    "initiator": "by",
+    "alias": [],
+    "description": "Use ``@Teslovian /by {Your Text}`` to generate an Image with a text referring to ``{Your Text}``",
+    "extensions": []
   }]
 }

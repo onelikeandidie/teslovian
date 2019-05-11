@@ -1,0 +1,150 @@
+{
+  "by": [{
+    "file": "./teska/img/by001.png",
+    "x": 540,
+    "y": 220,
+    "max_width": 185,
+    "max_height": 100,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  }],
+  "place": [{
+    "file": "./teska/img/place001.png",
+    "x": 30,
+    "y": 485,
+    "max_width": 700,
+    "max_height": 50,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  }],
+  "shirt": [{
+    "file": "./teska/img/shirt001.png",
+    "x": 270,
+    "y": 255,
+    "max_width": 300,
+    "max_height": 250,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  },{
+    "file": "./teska/img/shirt002.png",
+    "x": 270,
+    "y": 255,
+    "max_width": 300,
+    "max_height": 250,
+    "colour": "white",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  },{
+    "file": "./teska/img/shirt003.png",
+    "x": 260,
+    "y": 300,
+    "max_width": 490,
+    "max_height": 300,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  },{
+    "file": "./teska/img/shirt004.png",
+    "x": 200,
+    "y": 200,
+    "max_width": 370,
+    "max_height": 530,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  }],
+  "random": [{
+    "file": "./teska/img/random001.jpeg",
+    "x": 100,
+    "y": 340,
+    "max_width": 560,
+    "max_height": 40,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  },{
+    "file": "./teska/img/random004.jpg",
+    "x": 35,
+    "y": 500,
+    "max_width": 720,
+    "max_height": 50,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  },{
+    "file": "./teska/img/random002.jpg",
+    "x": 245,
+    "y": 525,
+    "max_width": 505,
+    "max_height": 40,
+    "colour": "white",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  },{
+    "file": "./teska/img/random003.jpg",
+    "x": 35,
+    "y": 45,
+    "max_width": 666,
+    "max_height": 40,
+    "colour": "black",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  }],
+  "im": [{
+    "file": "./teska/img/im001.jpg",
+    "x": 157,
+    "y": 258,
+    "max_width": 570,
+    "max_height": 50,
+    "colour": "white",
+    "author": {
+      "can": false
+    },
+    "avatar": {
+      "can": false
+    }
+  }]
+}

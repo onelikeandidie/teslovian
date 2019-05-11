@@ -5,6 +5,10 @@ const client = new Discord.Client();
 const http = require("http");
 // gitLab that Teslov made for me owo
 const gitLab = require("./gitlab.js");
+// Teska so cute
+const teska = require("./teska/teska.js");
+// startup the cutest thing ever
+const cutie = new teska(client);
 // fs to write logs
 const fs = require('fs');
 // node-schedule for executing functions on specific dates and times
@@ -31,6 +35,21 @@ const userPoints = require('./pointsystem.js');
   in a database so other classes can access them and other programs
 */
 const userPointsDatabase = new userPoints('./data/userdata.sqlite');
+
+var envConfig;
+// Try to import the config environment variables from envConfig.json
+try {
+  var envConfig = require('./envConfig.json');
+} catch (e) {
+  // Try to import the config environment variables
+  var envConfig = {
+    "token": process.env.BOT_TOKEN || "TOKEN_HERE",
+    "gitLabPushChannel": process.env.GITLABPUSHCHANNEL || "PUSH_CHANNEL_HERE",
+    "gitLabMergeChannel": process.env.GITLABMERGECHANNEL || "MERGER_CHANNEL_HERE",
+    "port": process.env.PORT || "PORT_HERE"
+  };
+  console.error("no envConfig.json found!");
+}
 
 function isValidJSON(text) {
   let completed = null;
@@ -117,44 +136,54 @@ client.on('message', msg => {
     msg.reply(finalAnswer);
   }
 
-  if (Message.startsWith(config.prefix + "HEY")) {
+  if (Message.includes("HEY") && msg.isMentioned(client.user.id)) {
     // this variable is the final response of this command
     let finalAnswer = null;
     /* If the Sender is Teslov the bot should say it believes him instead of a
       classic phrase
     */
-    if (sender.id == 180407296705167360) {
-      msg.channel.send('I will always believe you Teslov');
-    } else {
-      /* Special Events change the classic response of the bot with a switch
+    switch (sender.id) {
+      case "180407296705167360":
+        finalAnswer = 'I hope you can forgive my Existence father.';
+        break;
+      case "180407675681505281":
+        finalAnswer = "I know you don't want me";
+        break;
+      case "313399015691649024":
+        finalAnswer = "Fuck you, you shouldn't have created me"
+        break;
+      default:
+        /* Special Events change the classic response of the bot with a switch
 
-      This uses the todays_events variable and the id of the event in config
-      {
-        "id":"Event Id",
-        "name": "Event Name",
-        "date": "Event Date",
-        "special_function": "Event Designated function"
-      }
-      */
-      switch (todays_events[0].id) {
-        case "halloween":
-          finalAnswer = "BOOOOOOOOOOOOO!!! Did I spook you human?";
-          break;
-        case "october":
-          finalAnswer = "Get ready for a spooky month human!";
-          break;
-        case "myceliumbirthday":
-          finalAnswer = "Happy Birthday Mycelium! 🎉 🎂 🎉";
-          break;
-        case "test":
-          finalAnswer = "Meh";
-          break;
-        default:
-          finalAnswer = "Hey, I'm a believer of teslov!";
-      }
-      // Send the final message to the chat after all the processing is done
-      msg.channel.send(finalAnswer);
+        This uses the todays_events variable and the id of the event in config
+        {
+          "id":"Event Id",
+          "name": "Event Name",
+          "date": "Event Date",
+          "special_function": "Event Designated function"
+        }
+        */
+        switch (todays_events[0].id) {
+          case "halloween":
+            finalAnswer = "BOOOOOOOOOOOOO!!! Did I spook you human?";
+            break;
+          case "october":
+            finalAnswer = "Get ready for a spooky month human!";
+            break;
+          case "myceliumbirthday":
+            finalAnswer = "Happy Birthday Mycelium! 🎉 🎂 🎉";
+            break;
+          case "test":
+            finalAnswer = "Meh";
+            break;
+          default:
+            finalAnswer = "Hey, I'm a believer of teslov!";
+        }
     }
+    // Stop typing
+    msg.channel.stopTyping();
+    // Send the final message to the chat after all the processing is done
+    msg.channel.send(finalAnswer);
   }
 
   if (Message.startsWith(config.prefix)) {
@@ -326,7 +355,7 @@ client.on('error', e => {
   });
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(envConfig.token);
 
 const server = http.createServer((req, res) => {
   let body = "";
@@ -334,17 +363,17 @@ const server = http.createServer((req, res) => {
     body += chunk.toString();
   });
   req.on('end', () => {
-    console.log("Downloading info on port:3001");
+    console.log("Downloading info on port:" + process.env.PORT || "Downloading info on port:" + 3000);
     gitLab.createMessage(body, (msg, kind) => {
       try {
         console.log(kind);
         switch (kind) {
           case "push":
-            client.channels.get(process.env.GITLABPUSHCHANNEL).send(msg);
+            client.channels.get(envConfig.gitLabPushChannel).send(msg);
 
             break;
           case "merge_request":
-            client.channels.get(process.env.GITLABMERGECHANNEL).send(msg);
+            client.channels.get(envConfig.gitLabMergeChannel).send(msg);
 
             break;
           default:
@@ -364,4 +393,4 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(process.env.PORT);
+server.listen(envConfig.port || 3000);
