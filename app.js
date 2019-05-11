@@ -31,22 +31,20 @@ const userPoints = require('./pointsystem.js');
   in a database so other classes can access them and other programs
 */
 const userPointsDatabase = new userPoints('./data/userdata.sqlite');
-// Try to import the config environment variables
+
+var envConfig;
+// Try to import the config environment variables from envConfig.json
 try {
-  const envConfig = {
-    token = process.env.BOT_TOKEN,
-    gitLabPushChannel = process.env.GITLABPUSHCHANNEL,
-    gitLabMergeChannel = process.env.GITLABMERGECHANNEL,
-    port = process.env.PORT
-  }
+  var envConfig = require('./envConfig.json');
 } catch (e) {
-  // If none found try to import the config environment variables from envConfig.json
-  try {
-    const envConfig = require('./envConfig.json');
-  } catch (e) {
-    console.error("no envConfig.json found!");
-    process.exit(0);
-  }
+  // Try to import the config environment variables
+  var envConfig = {
+    "token": process.env.BOT_TOKEN || "TOKEN_HERE",
+    "gitLabPushChannel": process.env.GITLABPUSHCHANNEL || "PUSH_CHANNEL_HERE",
+    "gitLabMergeChannel": process.env.GITLABMERGECHANNEL || "MERGER_CHANNEL_HERE",
+    "port": process.env.PORT || "PORT_HERE"
+  };
+  console.error("no envConfig.json found!");
 }
 
 function isValidJSON(text) {
