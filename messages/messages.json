@@ -29,7 +29,7 @@
           "command": "trading"
         }
       ],
-      "description": "This command gives some of the caster's karma to the target mentioned user. The correct use is ``!t karma trade @mention amount``"
+      "description": "This command gives some of the caster's karma to the target mentioned user. The correct use is ``t! karma trade @mention amount``"
     }, {
       "title": "Check",
       "initiator": "check",
@@ -40,7 +40,7 @@
           "command": "checking"
         }
       ],
-      "description": "This command shows the karma of mentioned user. The correct use is ``!t karma check @mention``"
+      "description": "This command shows the karma of mentioned user. The correct use is ``t! karma check @mention``"
     }, {
       "title": "Leaderboad",
       "initiator": "leaderboard",
@@ -54,7 +54,7 @@
           "command": "god"
         }
       ],
-      "description": "Display a leaderboard of with the top five users. The correct use is ``!t karma leaderboard``"
+      "description": "Display a leaderboard of with the top five users. The correct use is ``t! karma leaderboard``"
     }]
   }, {
     "title": "Data",
