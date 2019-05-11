@@ -340,15 +340,11 @@ const server = http.createServer((req, res) => {
         console.log(kind);
         switch (kind) {
           case "push":
-            client.channels.get("484656210751258645").send(msg);
+            client.channels.get(process.env.GITLABPUSHCHANNEL).send(msg);
 
             break;
           case "merge_request":
-            client.channels.get("484656210751258645").send(msg);
-
-            break;
-          case "message":
-            client.channels.get("484652870281461761").send(msg);
+            client.channels.get(process.env.GITLABMERGECHANNEL).send(msg);
 
             break;
           default:
@@ -368,4 +364,4 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT);
