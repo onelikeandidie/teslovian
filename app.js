@@ -334,7 +334,7 @@ const server = http.createServer((req, res) => {
     body += chunk.toString();
   });
   req.on('end', () => {
-    console.log("Downloading info on port:3001");
+    console.log("Downloading info on port:" + process.env.PORT || "Downloading info on port:" + 3000);
     gitLab.createMessage(body, (msg, kind) => {
       try {
         console.log(kind);
