@@ -284,7 +284,7 @@ client.on('message', msg => {
       }
     }
 
-    if (Message.startsWith(config.prefix + "DATA")) {
+    if (Message.startsWith(config.prefix + " DATA")) {
       switch (Message) {
         case config.prefix + "DATA" + " " + "UPTIME":
           let timePassed = (new Date()) - startDate;
@@ -298,7 +298,7 @@ client.on('message', msg => {
       }
     }
 
-    if (Message.startsWith(config.prefix + "HELP") || Message.startsWith(config.prefix + "H") || Message.startsWith(config.prefix + "?")) {
+    if (Message.startsWith(config.prefix + " HELP") || Message.startsWith(config.prefix + " H") || Message.startsWith(config.prefix + " ?")) {
       let embedMessage;
       let callback01 = function(m) {
         console.log(m);
@@ -346,6 +346,8 @@ client.on('message', msg => {
       callback01(helpMessage);
     }
   }
+  // For some reason the bot keeps typing
+  msg.channel.stopTyping();
 });
 
 client.on('error', e => {
