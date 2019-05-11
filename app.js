@@ -3,6 +3,8 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 // http server for Post requests and others
 const http = require("http");
+// gitLab that Teslov made for me owo
+const gitLab = require("./gitlab.js");
 // fs to write logs
 const fs = require('fs');
 // node-schedule for executing functions on specific dates and times
@@ -325,3 +327,45 @@ client.on('error', e => {
 });
 
 client.login(process.env.BOT_TOKEN);
+
+const server = http.createServer((req, res) => {
+  let body = "";
+  req.on('data', chunk => {
+    body += chunk.toString();
+  });
+  req.on('end', () => {
+    console.log("Downloading info on port:3001");
+    gitLab.createMessage(body, (msg, kind) => {
+      try {
+        console.log(kind);
+        switch (kind) {
+          case "push":
+            client.channels.get("484656210751258645").send(msg);
+
+            break;
+          case "merge_request":
+            client.channels.get("484656210751258645").send(msg);
+
+            break;
+          case "message":
+            client.channels.get("484652870281461761").send(msg);
+
+            break;
+          default:
+
+        }
+
+      } catch (e) {
+        console.log("Error processing object kind");
+        console.error(e);
+      } finally {
+        console.log("Sent Message to Discord \n");
+
+      }
+      // client.channels.get("484656210751258645").send(msg);
+    });
+    res.end("Got it.");
+  });
+});
+
+server.listen(process.env.PORT || 3000);
