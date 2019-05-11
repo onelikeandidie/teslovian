@@ -31,6 +31,23 @@ const userPoints = require('./pointsystem.js');
   in a database so other classes can access them and other programs
 */
 const userPointsDatabase = new userPoints('./data/userdata.sqlite');
+// Try to import the config environment variables
+try {
+  const envConfig = {
+    token = process.env.BOT_TOKEN,
+    gitLabPushChannel = process.env.GITLABPUSHCHANNEL,
+    gitLabMergeChannel = process.env.GITLABMERGECHANNEL,
+    port = process.env.PORT
+  }
+} catch (e) {
+  // If none found try to import the config environment variables from envConfig.json
+  try {
+    const envConfig = require('./envConfig.json');
+  } catch (e) {
+    console.error("no envConfig.json found!");
+    process.exit(0);
+  }
+}
 
 function isValidJSON(text) {
   let completed = null;
@@ -326,7 +343,7 @@ client.on('error', e => {
   });
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(envConfig.token);
 
 const server = http.createServer((req, res) => {
   let body = "";
@@ -340,11 +357,11 @@ const server = http.createServer((req, res) => {
         console.log(kind);
         switch (kind) {
           case "push":
-            client.channels.get(process.env.GITLABPUSHCHANNEL).send(msg);
+            client.channels.get(envConfig.gitLabPushChannel).send(msg);
 
             break;
           case "merge_request":
-            client.channels.get(process.env.GITLABMERGECHANNEL).send(msg);
+            client.channels.get(envConfig.gitLabMergeChannel).send(msg);
 
             break;
           default:
@@ -364,4 +381,4 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(envConfig.port || 3000);
